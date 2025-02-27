@@ -1,10 +1,10 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 
-app = Flask(__name__)
+app = Flask(_name_)
 
 @app.route('/', methods=['GET'])
 def home():
-    return "Movie Recommendation API is running! 🚀"
+    return render_template('index.html')
 
-if __name__ == '__main__':
+if _name_ == '_main_':
     app.run(debug=True)
