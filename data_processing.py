@@ -17,7 +17,10 @@ def preprocess_movies(input_file = 'TMDB_movies.csv', output_file='filtered_movi
     df = pd.read_csv(input_file)
 
     df['vote_average'] = pd.to_numeric(df['vote_average'], errors='coerce')
-    df_filtered = df[df['vote_average'] >= 0.6] #leave only movies with rating more than 0.6 in the range of 0-1
+    df_filtered = df[df['vote_average'] > 0]
+    df_filtered = df[df['vote_average'] >= 6.0]
+    
+    #df_filtered = df[df['vote_average'] >= 0.6] #leave only movies with rating more than 0.6 in the range of 0-1
     df_filtered.to_csv(output_file, index=False) #save the preprocessed dataframe into output_file
     df_filtered = df_filtered.drop_duplicates() #drops the duplicate rows from the dataset
 
@@ -29,7 +32,20 @@ def preprocess_movies(input_file = 'TMDB_movies.csv', output_file='filtered_movi
     return df_filtered
     
     
-preprocess_movies()
+#preprocess_movies()
+
+df=pd.read_csv('filtered_movies.csv')
+# Drop rows with NaN genres (optional, if any exist)
+df = df.dropna(subset=['genres'])
+
+# Split by comma, strip whitespace, flatten the list
+all_genres = df['genres'].str.split(',').explode().str.strip()
+
+# Get unique genres
+unique_genres = sorted(all_genres.unique())
+
+# Print the result
+print(unique_genres)
 
 
 

@@ -5,20 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Movie Recommendation</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
 </head>
 <body>
+    {% include 'header.html' %}
+    
     <div class="header">
         <h1>Movie Recommendation</h1>
     </div>
 
     <div class="container">
         <div class="recommendations" id="recommendations"></div>
+        <button id="refreshButton" class="refresh-button" style="display: none;">
+            <i class="fas fa-sync-alt"></i>
+            <span>New Recommendations</span>
+        </button>
     </div>
 
     <form class="input-section" id="inputForm">
+        <div class="checkbox-container">
+            <input type="checkbox" id="excludeAnimation" name="excludeAnimation">
+            <label for="excludeAnimation">Exclude animation movies</label>
+        </div>
         <input id="mood" type="text" placeholder="How do you feel?" />
         <button type="submit" id="submit">➤</button>
     </form>
+
 </body>
 </html>

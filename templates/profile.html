@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ current_user.username }}'s Profile - MoviOn</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+</head>
+<body>
+    {% include 'header.html' %}
+
+    <div class="profile-container">
+        <div class="profile-header">
+            <h1>Welcome, {{ current_user.username }}!</h1>
+            <div class="profile-stats">
+                <div class="stat">
+                    <span class="stat-number">{{ watched_count }}</span>
+                    <span class="stat-label">Movies Watched</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">{{ total_movies }}</span>
+                    <span class="stat-label">Total Movies</span>
+                </div>
+                {% if has_filter %}
+                <div class="stat filtered-stat">
+                    <span class="stat-number">{{ filtered_watched_count }}/{{ movies|length }}</span>
+                    <span class="stat-label">Watched on This Page</span>
+                </div>
+                <div class="stat filtered-stat">
+                    <span class="stat-number">{{ total_filtered_watched }}/{{ total_movies }}</span>
+                    <span class="stat-label">Watched in Filtered Results</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="movies-section">
+            <div class="search-filters">
+                <form class="search-bar" method="GET" action="{{ url_for('profile') }}">
+                    <input type="text" id="movie-search" name="search" placeholder="Search movies by name and click to the search icon" value="{{ search_term }}">
+                    <button type="submit" id="search-btn"><i class="fas fa-search"></i></button>
+                </form>
+                <div class="genre-filter-container">
+                    <div class="genre-filter-wrapper">
+                        <select id="genre-filter" name="genres" multiple="multiple">
+                            {% for genre in all_genres %}
+                                <option value="{{ genre }}" {% if genre in selected_genres %}selected{% endif %}>{{ genre }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" id="filter-btn" class="filter-button">
+                            <i class="fas fa-filter"></i> Filter
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-header">
+                <h2>Movie Library</h2>
+                <div class="filters">
+                    <button class="filter-btn active" data-filter="all">All Movies</button>
+                    <button class="filter-btn" data-filter="watched">Watched</button>
+                    <button class="filter-btn" data-filter="watchlater">Watch Later</button>
+                </div>
+            </div>
+
+            <div class="movies-grid">
+                {% for movie in movies %}
+                <div class="movie-card {% if movie.is_watched %}watched{% elif movie.in_watchlist %}watchlater{% endif %}" 
+                     data-status="{% if movie.is_watched %}watched{% elif movie.in_watchlist %}watchlater{% else %}unwatched{% endif %}"
+                     data-title="{{ movie.title | lower }}"
+                     data-genres="{{ movie.genres | join(',') | lower }}">
+                    <div class="movie-poster">
+                        <img src="{{ movie.poster_path }}" alt="{{ movie.title }} poster">
+                        <div class="movie-overlay">
+                            <div class="movie-actions">
+                                <button class="watch-toggle" data-movie-title="{{ movie.title }}">
+                                    {% if movie.is_watched %}
+                                    <i class="fas fa-check-circle"></i> Watched
+                                    {% else %}
+                                    <i class="far fa-circle"></i> Mark as Watched
+                                    {% endif %}
+                                </button>
+                                <button class="watchlist-toggle" data-movie-title="{{ movie.title }}">
+                                    {% if movie.in_watchlist %}
+                                    <i class="fas fa-bookmark"></i> In Watch Later
+                                    {% else %}
+                                    <i class="far fa-bookmark"></i> Add to Watch Later
+                                    {% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="movie-info">
+                        <h3>{{ movie.title }}</h3>
+                        <p class="release-date">{{ movie.release_date }}</p>
+                        <div class="genres">
+                            {% for genre in movie.genres %}
+                            <span class="genre-tag">{{ genre }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if total_pages > 1 %}
+            <div class="pagination">
+                {% if current_page > 1 %}
+                <a href="{{ url_for('profile', page=current_page-1, search=search_term) }}" class="page-link">&laquo; Previous</a>
+                {% endif %}
+                
+                <span class="page-info">Page {{ current_page }} of {{ total_pages }}</span>
+                
+                <div class="page-navigation">
+                    {% if current_page < total_pages %}
+                    <a href="{{ url_for('profile', page=current_page+1, search=search_term) }}" class="page-link">Next &raquo;</a>
+                    {% endif %}
+                    <div class="page-jump">
+                        <input type="number" id="page-input" min="1" max="{{ total_pages }}" placeholder="Go to page..." value="{{ current_page }}">
+                        <button id="jump-btn" class="page-link">Go</button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+
+    <script>
+        // Initialize Select2 for genre filter with custom template
+        $(document).ready(function() {
+            $('#genre-filter').select2({
+                placeholder: "Filter by genres and click to the filter button",
+                allowClear: true,
+                templateResult: formatGenre,
+                templateSelection: formatGenre,
+                width: '100%'
+            });
+
+            // Set initial selections if they exist
+            {% if selected_genres %}
+            $('#genre-filter').val({{ selected_genres|tojson|safe }}).trigger('change');
+            {% endif %}
+
+            function formatGenre(genre) {
+                if (!genre.id) return genre.text;
+                return $('<span><input type="checkbox" ' + (genre.selected ? 'checked' : '') + '/> ' + genre.text + '</span>');
+            }
+
+            // Handle filter button click
+            $('#filter-btn').click(function() {
+                const selectedGenres = $('#genre-filter').val();
+                if (selectedGenres && selectedGenres.length > 0) {
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.set('genres', selectedGenres.join(','));
+                    window.location.href = currentUrl.toString();
+                } else {
+                    // If no genres selected, remove genres parameter
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.delete('genres');
+                    window.location.href = currentUrl.toString();
+                }
+            });
+        });
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                document.querySelector('.filter-btn.active').classList.remove('active');
+                button.classList.add('active');
+                
+                // If "All Movies" button is clicked, reset everything and go to first page
+                if (button.dataset.filter === 'all') {
+                    // Clear genre selections
+                    $('#genre-filter').val(null).trigger('change');
+                    // Clear search
+                    document.getElementById('movie-search').value = '';
+                    // Redirect to first page without any filters
+                    window.location.href = "{{ url_for('profile') }}";
+                } else {
+                    const status = button.dataset.filter;
+                    document.querySelectorAll('.movie-card').forEach(card => {
+                        card.style.display = (status === card.dataset.status) ? 'block' : 'none';
+                    });
+                }
+            });
+        });
+
+        // Page jump functionality
+        document.getElementById('jump-btn').addEventListener('click', () => {
+            const pageInput = document.getElementById('page-input');
+            const page = parseInt(pageInput.value);
+            if (page >= 1 && page <= {{ total_pages }}) {
+                const urlParams = new URLSearchParams(window.location.search);
+                urlParams.set('page', page);
+                window.location.href = `${window.location.pathname}?${urlParams.toString()}`;
+            }
+        });
+
+        // Allow Enter key in page input
+        document.getElementById('page-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('jump-btn').click();
+            }
+        });
+    </script>
+    <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+</body>
+</html> 

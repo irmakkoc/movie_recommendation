@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - MoviOn</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/footer.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/about.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    {% include 'header.html' %}
+
+    <main class="about-page">
+        <section class="hero-section">
+            <div class="container">
+                <h1>About MoviOn</h1>
+                <p class="subtitle">Where Emotions Meet Entertainment</p>
+            </div>
+        </section>
+
+        <section class="mission-section">
+            <div class="container">
+                <h2>Our Mission</h2>
+                <div class="mission-content">
+                    <div class="mission-text">
+                        <p>At MoviOn, we believe that movies have the power to transform moods, heal emotions, and provide comfort when needed most. Our mission is to connect people with the perfect movies that resonate with their current emotional state.</p>
+                        <p>Using advanced ML technology, we analyze your emotions and recommend movies that can either complement or help transform your mood, creating a personalized viewing experience unlike any other.</p>
+                    </div>
+                    <div class="mission-icon">
+                        <i class="fas fa-heart-pulse"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features-section">
+            <div class="container">
+                <h2>What Makes Us Different</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <i class="fas fa-brain"></i>
+                        <h3>Emotion-Driven</h3>
+                        <p>Our ML model understands the complex relationship between emotions and cinematic preferences.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-user-shield"></i>
+                        <h3>Personalized Experience</h3>
+                        <p>Every recommendation is tailored to your unique emotional state and preferences.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-database"></i>
+                        <h3>Vast Movie Library</h3>
+                        <p>Access to a carefully curated database of movies across various genres and emotions.</p>
+                    </div>
+                    <div class="feature-card">
+                        <i class="fas fa-star"></i>
+                        <h3>Exclusive Features</h3>
+                        <p>Registered users unlock advanced tools like to watch list, watched list, and more.</p>
+                    </div>
+                    
+                </div>
+            </div>
+        </section>
+
+        <section class="team-section">
+            <div class="container">
+                <h2>Meet the Team</h2>
+                <div class="team-grid">
+                    <div class="team-member">
+                        <div class="member-info">
+                            <h3>Serkan Açar</h3>
+                            <p>Co-founder & Developer</p>
+                        </div>
+                    </div>
+                    <div class="team-member">
+                        <div class="member-info">
+                            <h3>Irmak Koç</h3>
+                            <p>Co-founder & Developer</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    {% include "footer.html" %}
+</body>
+</html> 
