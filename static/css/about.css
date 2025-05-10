@@ -1,0 +1,200 @@
+/* About Page Styles */
+.about-page {
+    padding-top: 80px;
+    min-height: 100vh;
+    background-color: #e3dcd2;
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, #013328, #024d3c);
+    color: #ffffff;
+    padding: 4rem 2rem;
+    text-align: center;
+}
+
+.hero-section h1 {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    color: #e3dcd2;
+}
+
+.hero-section .subtitle {
+    font-size: 1.5rem;
+    opacity: 0.9;
+    color: #ffffff;
+}
+
+/* Mission Section */
+.mission-section {
+    padding: 4rem 2rem;
+    background-color: #ffffff;
+}
+
+.mission-section h2 {
+    text-align: center;
+    color: #013328;
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+}
+
+.mission-content {
+    display: flex;
+    align-items: center;
+    gap: 4rem;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.mission-text {
+    flex: 2;
+}
+
+.mission-text p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #013328;
+    margin-bottom: 1.5rem;
+}
+
+.mission-icon {
+    flex: 1;
+    text-align: center;
+}
+
+.mission-icon i {
+    font-size: 8rem;
+    color: #013328;
+    opacity: 0.9;
+}
+
+/* Features Section */
+.features-section {
+    padding: 4rem 2rem;
+    background-color: #013328;
+}
+
+.features-section h2 {
+    text-align: center;
+    color: #ffffff;
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+}
+
+.features-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr); /* Force 4 columns */
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+}
+
+.feature-card {
+    background: #ffffff;
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+}
+
+.feature-card i {
+    font-size: 2.5rem;
+    color: #013328;
+    margin-bottom: 1.5rem;
+}
+
+.feature-card h3 {
+    color: #013328;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.feature-card p {
+    color: #013328;
+    line-height: 1.6;
+}
+
+/* Team Section */
+.team-section {
+    padding: 4rem 2rem;
+    background-color: #ffffff;
+}
+
+.team-section h2 {
+    text-align: center;
+    color: #013328;
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+}
+
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 3rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.team-member {
+    text-align: center;
+    padding: 2rem;
+    border-radius: 15px;
+    background: linear-gradient(135deg, rgba(1, 51, 40, 0.1), rgba(1, 51, 40, 0.2));
+    transition: transform 0.3s ease;
+}
+
+.team-member:hover {
+    transform: translateY(-5px);
+}
+
+.member-info h3 {
+    color: #013328;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.member-info p {
+    color: #013328;
+    font-size: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-section h1 {
+        font-size: 2.5rem;
+    }
+
+    .hero-section .subtitle {
+        font-size: 1.2rem;
+    }
+
+    .mission-content {
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .mission-icon i {
+        font-size: 6rem;
+    }
+
+    .mission-section,
+    .features-section,
+    .team-section {
+        padding: 4rem 1.5rem;
+    }
+
+    .feature-card {
+        padding: 1.5rem;
+    }
+} 
+
+@media (max-width: 900px) {
+    .features-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+}

@@ -1,0 +1,140 @@
+.auth-container {
+    min-height: calc(100vh - 160px);  /* Adjusted to account for header and footer */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #013328, #013328);
+    margin-top: 80px;  /* Add margin for header */
+}
+
+.auth-box {
+    background: rgba(255, 255, 255, 0.98);
+    padding: 2.5rem;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #013328, #019f7d);
+}
+
+.auth-box h2 {
+    color: #013328;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.auth-form {
+    max-width: 380px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.auth-form .form-group {
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.auth-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #013328;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 1rem 0.75rem;
+    height: 3rem;
+    font-size: 0.95rem;
+    color: #1F2937;
+    background-color: #FFFFFF;
+    border: 0.5px solid #013328;
+    border-radius: 10px;
+    transition: all 0.2s ease-in-out;
+    box-sizing: border-box;
+}
+
+.auth-form input:focus {
+    outline: none;
+    border-color: #013328;
+    box-shadow: 0 0 0 3px rgba(1, 51, 40, 0.1);
+}
+
+.auth-form .username-input {
+    width: 100% !important;
+}
+
+.auth-submit {
+    width: 100%;
+    padding: 0.875rem;
+    background: linear-gradient(45deg, #013328 0%, #019f7d 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    margin-top: 1rem;
+}
+
+.auth-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px -3px rgba(1, 51, 40, 0.3);
+}
+
+.auth-link {
+    text-align: center;
+    margin-top: 1rem;
+    color: #6B7280;
+    font-size: 0.9rem;
+}
+
+.auth-link a {
+    color: #013328;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-link a:hover {
+    text-decoration: underline;
+}
+
+.alert {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.alert-error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #991b1b;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+@media (max-width: 480px) {
+    .auth-container {
+        padding: 1rem;
+    }
+    
+    .auth-box {
+        padding: 1.5rem;
+    }
+} 
