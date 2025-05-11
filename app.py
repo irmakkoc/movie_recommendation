@@ -12,6 +12,8 @@ import string
 from flask_mail import Mail, Message
 from datetime import datetime
 from functools import lru_cache
+from movie_lists import movie_lists
+import requests
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24)
@@ -39,6 +41,9 @@ migrate = Migrate(app, db)  # Initialize Flask-Migrate
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+# Register blueprints
+app.register_blueprint(movie_lists)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -160,6 +165,9 @@ def get_emotion():
             # Create IMDb URL if ID exists
             imdb_url = f"https://www.imdb.com/title/{movie['imdb_id']}" if movie["imdb_id"] else None
 
+            # Get trailer URL (you'll need to implement this function)
+            trailer_url = get_movie_trailer(movie["title"])
+
             movies_with_metadata.append({
                 "title": movie["title"],
                 "poster_path": poster_url,
@@ -168,7 +176,8 @@ def get_emotion():
                 "imdb_url": imdb_url,
                 "runtime": movie["runtime"],
                 "genres": movie["genres"],
-                "language": movie["original_language"]
+                "language": movie["original_language"],
+                "trailer_url": trailer_url
             })
 
         # Get the emotion category from movie_recommender
@@ -183,6 +192,33 @@ def get_emotion():
     except Exception as e:
         print("🛑 SERVER ERROR:", e)
         return jsonify({"error": str(e)}), 500
+
+def get_movie_trailer(title):
+    """
+    Get the YouTube trailer embed URL for a movie using TMDB API.
+    Returns None if not available.
+    """
+    tmdb_api_key = '9c91b18187d811058d6e72368a39bf12'
+    search_url = f'https://api.themoviedb.org/3/search/movie?api_key={tmdb_api_key}&query={title}'
+    try:
+        search_resp = requests.get(search_url)
+        search_resp.raise_for_status()
+        search_data = search_resp.json()
+        results = search_data.get('results', [])
+        if not results:
+            return None
+        movie_id = results[0]['id']
+        videos_url = f'https://api.themoviedb.org/3/movie/{movie_id}/videos?api_key={tmdb_api_key}'
+        videos_resp = requests.get(videos_url)
+        videos_resp.raise_for_status()
+        videos_data = videos_resp.json()
+        for video in videos_data.get('results', []):
+            if video['site'] == 'YouTube' and video['type'] == 'Trailer':
+                return f'https://www.youtube.com/embed/{video["key"]}'
+        return None
+    except Exception as e:
+        print(f"Error fetching trailer for '{title}': {e}")
+        return None
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -418,7 +454,14 @@ def profile():
         search_term = request.args.get('search', '').lower()
         selected_genres = request.args.get('genres', '').split(',') if request.args.get('genres') else []
         selected_genres = [g.strip() for g in selected_genres if g.strip()]  # Clean up genre list
+        selected_language = request.args.get('language', '')
+        runtime_min = request.args.get('runtime_min', type=int)
+        runtime_max = request.args.get('runtime_max', type=int)
+        year = request.args.get('year', type=int)
+        year_min = request.args.get('year_min', type=int)
+        year_max = request.args.get('year_max', type=int)
         per_page = 20  # Number of movies per page
+        sort_by = request.args.get('sort_by', 'default')
         
         # Load the movies from CSV
         movies_df = pd.read_csv("filtered_movies.csv")
@@ -441,7 +484,7 @@ def profile():
 
         # Convert genres column to list format
         movies_df['genres'] = movies_df['genres'].apply(parse_genres)
-            
+        
         # Apply genre filter if provided
         if selected_genres:
             # Filter movies that contain all selected genres
@@ -451,6 +494,41 @@ def profile():
                     for genre in selected_genres
                 )
             )]
+        
+        # Apply language filter
+        if selected_language:
+            movies_df = movies_df[movies_df['original_language'] == selected_language]
+        
+        # Apply runtime filter
+        if runtime_min is not None:
+            movies_df = movies_df[movies_df['runtime'] >= runtime_min]
+        if runtime_max is not None:
+            movies_df = movies_df[movies_df['runtime'] <= runtime_max]
+        
+        # Extract year as a new column for robust filtering
+        movies_df['year'] = pd.to_numeric(movies_df['release_date'].astype(str).str[:4], errors='coerce')
+        movies_df = movies_df.dropna(subset=['year'])
+        movies_df['year'] = movies_df['year'].astype(int)
+
+        # Apply year range filter
+        if year_min is not None:
+            movies_df = movies_df[movies_df['year'] >= year_min]
+        if year_max is not None:
+            movies_df = movies_df[movies_df['year'] <= year_max]
+        # Apply exact year filter (only if set and min/max are not set)
+        if year is not None and not (year_min or year_max):
+            movies_df = movies_df[movies_df['year'] == year]
+        
+        # Sorting logic
+        if sort_by == 'release_date_asc':
+            movies_df = movies_df.sort_values(by='release_date', ascending=True)
+        elif sort_by == 'release_date_desc':
+            movies_df = movies_df.sort_values(by='release_date', ascending=False)
+        elif sort_by == 'runtime_asc':
+            movies_df = movies_df.sort_values(by='runtime', ascending=True)
+        elif sort_by == 'runtime_desc':
+            movies_df = movies_df.sort_values(by='runtime', ascending=False)
+        # else: default order (no sorting)
         
         total_movies = len(movies_df)
         
@@ -474,24 +552,63 @@ def profile():
             all_genres.update(genres)
         all_genres = sorted(list(all_genres))
         
+        # Get all unique languages
+        all_languages = sorted(movies_df['original_language'].dropna().unique())
+        
+        # Get min/max year and runtime
+        years = movies_df['year']
+        available_years = sorted(years.unique())
+        min_runtime = int(movies_df['runtime'].min()) if not movies_df['runtime'].isnull().all() else 0
+        max_runtime = int(movies_df['runtime'].max()) if not movies_df['runtime'].isnull().all() else 300
+        min_year = int(years.min()) if not years.empty else 1900
+        max_year = int(years.max()) if not years.empty else 2024
+        
         # Prepare movies data for template
         movies = []
         filtered_watched_count = 0  # Counter for watched movies in filtered results
+        main_movie_titles = set()
         for _, movie in current_page_df.iterrows():
             poster_url = get_cached_poster_url(movie['title'])
             is_watched = movie['title'] in watched_movies
-            
             if is_watched:
                 filtered_watched_count += 1
-                
             movies.append({
                 'title': movie['title'],
                 'poster_path': poster_url,
                 'release_date': movie['release_date'],
+                'runtime': movie.get('runtime', ''),
                 'genres': movie['genres'],
                 'is_watched': is_watched,
                 'in_watchlist': movie['title'] in watchlist_movies
             })
+            main_movie_titles.add(movie['title'])
+
+        # Add watched movies not in main movie list
+        for watched_title in watched_movies:
+            if watched_title not in main_movie_titles:
+                movies.append({
+                    'title': watched_title,
+                    'poster_path': get_cached_poster_url(watched_title),
+                    'release_date': '',
+                    'runtime': '',
+                    'genres': [],
+                    'is_watched': True,
+                    'in_watchlist': False,
+                    'not_in_main': True
+                })
+        # Add watchlist movies not in main movie list and not already added
+        for watchlist_title in watchlist_movies:
+            if watchlist_title not in main_movie_titles and watchlist_title not in watched_movies:
+                movies.append({
+                    'title': watchlist_title,
+                    'poster_path': get_cached_poster_url(watchlist_title),
+                    'release_date': '',
+                    'runtime': '',
+                    'genres': [],
+                    'is_watched': False,
+                    'in_watchlist': True,
+                    'not_in_main': True
+                })
         
         # Calculate total pages
         total_pages = max((total_movies + per_page - 1) // per_page, 1)  # Ensure at least 1 page
@@ -509,66 +626,55 @@ def profile():
             filtered_watched_count=filtered_watched_count,  # Current page watched count
             total_filtered_watched=total_filtered_watched,  # Total filtered watched count
             all_genres=all_genres,
+            all_languages=all_languages,
+            available_years=available_years,
+            min_runtime=min_runtime,
+            max_runtime=max_runtime,
             search_term=search_term,
             selected_genres=selected_genres,  # Pass selected genres to template
-            has_filter=bool(search_term or selected_genres)  # Indicate if any filter is active
+            selected_language=selected_language,
+            runtime_min=runtime_min,
+            runtime_max=runtime_max,
+            selected_year=year,
+            min_year=min_year,
+            max_year=max_year,
+            year_min=year_min,
+            year_max=year_max,
+            has_filter=bool(search_term or selected_genres or selected_language or runtime_min is not None or runtime_max is not None or year is not None or year_min is not None or year_max is not None),  # Indicate if any filter is active
+            sort_by=sort_by
         )
     except Exception as e:
         print(f"Error in profile route: {str(e)}")
         import traceback
         print(f"Full traceback: {traceback.format_exc()}")  # Add this line for better error tracking
-        flash('An error occurred while loading your profile. Please try again.')
-        return redirect(url_for('home'))
-
-@app.route('/toggle_watched/<path:movie_title>', methods=['POST'])
-@login_required
-def toggle_watched(movie_title):
-    # Check if movie is already watched
-    watched_movie = WatchedMovie.query.filter_by(
-        user_id=current_user.id,
-        movie_title=movie_title
-    ).first()
-    
-    if watched_movie:
-        # If movie is watched, remove it
-        db.session.delete(watched_movie)
-        is_watched = False
-    else:
-        # If movie is not watched, add it
-        watched_movie = WatchedMovie(
-            user_id=current_user.id,
-            movie_title=movie_title
+        # Instead of redirect, render the profile page with an error message
+        return render_template(
+            'profile.html',
+            movies=[],
+            current_page=1,
+            total_pages=1,
+            total_movies=0,
+            watched_count=0,
+            filtered_watched_count=0,
+            total_filtered_watched=0,
+            all_genres=[],
+            all_languages=[],
+            available_years=[],
+            min_runtime=0,
+            max_runtime=0,
+            min_year=1900,
+            max_year=2024,
+            year_min=None,
+            year_max=None,
+            search_term='',
+            selected_genres=[],
+            selected_language='',
+            runtime_min=None,
+            runtime_max=None,
+            selected_year=None,
+            has_filter=True,
+            error_message='No movies found or invalid filter. Please try different filters.'
         )
-        db.session.add(watched_movie)
-        is_watched = True
-    
-    db.session.commit()
-    return jsonify({'success': True, 'is_watched': is_watched})
-
-@app.route('/toggle_watchlist/<path:movie_title>', methods=['POST'])
-@login_required
-def toggle_watchlist(movie_title):
-    # Check if movie is already in watchlist
-    watchlist_movie = WatchLaterMovie.query.filter_by(
-        user_id=current_user.id,
-        movie_title=movie_title
-    ).first()
-    
-    if watchlist_movie:
-        # If movie is in watchlist, remove it
-        db.session.delete(watchlist_movie)
-        in_watchlist = False
-    else:
-        # If movie is not in watchlist, add it
-        watchlist_movie = WatchLaterMovie(
-            user_id=current_user.id,
-            movie_title=movie_title
-        )
-        db.session.add(watchlist_movie)
-        in_watchlist = True
-    
-    db.session.commit()
-    return jsonify({'success': True, 'in_watchlist': in_watchlist})
 
 # Modify your existing recommend_movies function to exclude watched movies
 def recommend_movies(emotion):

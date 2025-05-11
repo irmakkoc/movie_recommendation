@@ -33,7 +33,7 @@ def preprocess_movies(input_file = 'TMDB_movies.csv', output_file='filtered_movi
     
     
 #preprocess_movies()
-
+"""
 df=pd.read_csv('filtered_movies.csv')
 # Drop rows with NaN genres (optional, if any exist)
 df = df.dropna(subset=['genres'])
@@ -46,6 +46,15 @@ unique_genres = sorted(all_genres.unique())
 
 # Print the result
 print(unique_genres)
+"""
+# Load the CSV file
+movies_df = pd.read_csv('filtered_movies.csv')
+
+# Exclude rows where the 'adult' column is True (as string or boolean)
+filtered_df = movies_df[movies_df['adult'].astype(str).str.lower() != 'true']
+
+# Save the filtered DataFrame back to the CSV file
+filtered_df.to_csv('filtered_movies.csv', index=False)
 
 
 
