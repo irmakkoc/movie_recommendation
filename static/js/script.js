@@ -13,30 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Create and display movie cards
         data.movies.forEach((movie, index) => {
-            const movieDiv = document.createElement('div');
-            movieDiv.classList.add('movie');
-            
-            const movieImage = document.createElement('div');
-            movieImage.classList.add('movie-image');
-            movieImage.style.backgroundImage = `url(${movie.poster_path})`;
-            
-            const movieName = document.createElement('p');
-            movieName.classList.add('movie-name');
-            movieName.textContent = movie.title;
-
-            const movieDuration = document.createElement('p');
-            movieDuration.classList.add('movie-duration');
-            movieDuration.textContent = `${movie.runtime} minutes`;
-
-            // Add therapy text from the API response
-            const therapyText = document.createElement('p');
-            therapyText.classList.add('therapy-text');
-            therapyText.textContent = movie.tag;  // Use the tag directly from the API response
-            
-            movieDiv.appendChild(movieImage);
-            movieDiv.appendChild(movieName);
-            movieDiv.appendChild(movieDuration);
-            movieDiv.appendChild(therapyText);
+            const movieDiv = createMovieCard(movie);
             recommendationsDiv.appendChild(movieDiv);
             
             // Animation for each movie card
@@ -65,6 +42,133 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Show refresh button
         refreshButton.style.display = 'flex';
+    }
+
+    function createMovieCard(movie) {
+        const movieElement = document.createElement('div');
+        movieElement.className = 'movie';
+        
+        // Create the inner container for flip animation
+        const movieInner = document.createElement('div');
+        movieInner.className = 'movie-inner';
+        
+        // Create front side (movie info)
+        const movieFront = document.createElement('div');
+        movieFront.className = 'movie-front';
+        
+        const image = document.createElement('div');
+        image.className = 'movie-image';
+        image.style.backgroundImage = `url(${movie.poster_path})`;
+        
+        const name = document.createElement('div');
+        name.className = 'movie-name';
+        name.textContent = movie.title;
+        
+        const duration = document.createElement('div');
+        duration.className = 'movie-duration';
+        duration.textContent = `${movie.runtime} min`;
+        
+        const therapyText = document.createElement('div');
+        therapyText.className = 'therapy-text';
+        therapyText.textContent = movie.tag;
+
+        // Add movie actions if user is logged in
+        if (window.USER_IS_AUTHENTICATED === true || window.USER_IS_AUTHENTICATED === 'true') {
+            const movieActions = document.createElement('div');
+            movieActions.className = 'movie-actions';
+            const watchToggle = document.createElement('button');
+            watchToggle.className = 'watch-toggle';
+            watchToggle.dataset.movieTitle = movie.title;
+            watchToggle.innerHTML = '<i class="far fa-circle"></i> Mark as Watched';
+            const watchlistToggle = document.createElement('button');
+            watchlistToggle.className = 'watchlist-toggle';
+            watchlistToggle.dataset.movieTitle = movie.title;
+            watchlistToggle.innerHTML = '<i class="far fa-bookmark"></i> Add to Watch Later';
+            movieActions.appendChild(watchToggle);
+            movieActions.appendChild(watchlistToggle);
+            movieFront.appendChild(movieActions);
+            // Add event listeners for the action buttons
+            watchToggle.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                try {
+                    const response = await fetch(`/toggle_watched/${encodeURIComponent(movie.title)}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        watchToggle.innerHTML = data.is_watched ? 
+                            '<i class="fas fa-check-circle"></i> Watched' : 
+                            '<i class="far fa-circle"></i> Mark as Watched';
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            });
+            watchlistToggle.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                try {
+                    const response = await fetch(`/toggle_watchlist/${encodeURIComponent(movie.title)}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        watchlistToggle.innerHTML = data.in_watchlist ? 
+                            '<i class="fas fa-bookmark"></i> In Watch Later' : 
+                            '<i class="far fa-bookmark"></i> Add to Watch Later';
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
+        
+        movieFront.appendChild(image);
+        movieFront.appendChild(name);
+        movieFront.appendChild(duration);
+        movieFront.appendChild(therapyText);
+        
+        // Only add trailer back side and flip if trailer_url is present
+        if (movie.trailer_url) {
+            const movieBack = document.createElement('div');
+            movieBack.className = 'movie-back';
+            
+            const closeButton = document.createElement('button');
+            closeButton.className = 'close-trailer';
+            closeButton.innerHTML = '×';
+            closeButton.onclick = (e) => {
+                e.stopPropagation();
+                movieElement.classList.remove('flipped');
+            };
+            
+            const trailerFrame = document.createElement('iframe');
+            trailerFrame.src = movie.trailer_url;
+            trailerFrame.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+            trailerFrame.allowFullscreen = true;
+            
+            movieBack.appendChild(closeButton);
+            movieBack.appendChild(trailerFrame);
+            
+            // Add click event for flipping
+            movieElement.addEventListener('click', () => {
+                movieElement.classList.toggle('flipped');
+            });
+            
+            // Assemble the card
+            movieInner.appendChild(movieFront);
+            movieInner.appendChild(movieBack);
+        } else {
+            // Only show the front side, no flip
+            movieInner.appendChild(movieFront);
+        }
+        movieElement.appendChild(movieInner);
+
+        return movieElement;
     }
 
     async function getNewRecommendations(text) {
