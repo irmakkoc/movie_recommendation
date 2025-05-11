@@ -72,7 +72,10 @@ document.addEventListener('DOMContentLoaded', () => {
         therapyText.className = 'therapy-text';
         therapyText.textContent = movie.tag;
 
-        // Add movie actions if user is logged in
+        movieFront.appendChild(image);
+        movieFront.appendChild(name);
+        movieFront.appendChild(duration);
+        movieFront.appendChild(therapyText);
         if (window.USER_IS_AUTHENTICATED === true || window.USER_IS_AUTHENTICATED === 'true') {
             const movieActions = document.createElement('div');
             movieActions.className = 'movie-actions';
@@ -127,11 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
-        
-        movieFront.appendChild(image);
-        movieFront.appendChild(name);
-        movieFront.appendChild(duration);
-        movieFront.appendChild(therapyText);
         
         // Only add trailer back side and flip if trailer_url is present
         if (movie.trailer_url) {
