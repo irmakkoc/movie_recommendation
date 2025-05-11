@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        window.USER_IS_AUTHENTICATED = {{ 'true' if current_user.is_authenticated else 'false' }};
+    </script>
     <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
 </head>
 <body>
@@ -29,7 +32,7 @@
             <input type="checkbox" id="excludeAnimation" name="excludeAnimation">
             <label for="excludeAnimation">Exclude animation movies</label>
         </div>
-        <input id="mood" type="text" placeholder="How do you feel?" />
+        <input id="mood" type="text" placeholder="Tell us about your day, mood, feelings..." />
         <button type="submit" id="submit">➤</button>
     </form>
 

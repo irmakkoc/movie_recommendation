@@ -1,5 +1,7 @@
 <nav class="navbar">
-    <a href="{{ url_for('home') }}" class="nav-brand">MoviOn</a>
+    <a href="{{ url_for('home') }}" class="nav-brand">
+        <img src="{{ url_for('static', filename='thumbnail_MOVION.png') }}" alt="MoviOn Logo" style=" "> MoviOn
+    </a>
     <ul class="nav-links">
         <li><a href="{{ url_for('home') }}">Home</a></li>
         <li><a href="{{ url_for('index') }}">Get Recommendations</a></li>

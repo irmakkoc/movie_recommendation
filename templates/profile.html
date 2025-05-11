@@ -42,23 +42,60 @@
 
         <div class="movies-section">
             <div class="search-filters">
-                <form class="search-bar" method="GET" action="{{ url_for('profile') }}">
+                <div class="search-bar">
                     <input type="text" id="movie-search" name="search" placeholder="Search movies by name and click to the search icon" value="{{ search_term }}">
                     <button type="submit" id="search-btn"><i class="fas fa-search"></i></button>
-                </form>
-                <div class="genre-filter-container">
-                    <div class="genre-filter-wrapper">
-                        <select id="genre-filter" name="genres" multiple="multiple">
-                            {% for genre in all_genres %}
-                                <option value="{{ genre }}" {% if genre in selected_genres %}selected{% endif %}>{{ genre }}</option>
-                            {% endfor %}
-                        </select>
-                        <button type="button" id="filter-btn" class="filter-button">
-                            <i class="fas fa-filter"></i> Filter
-                        </button>
-                    </div>
+                </div>
+                <div class="sort-by-container">
+                    <label for="sort-by">Sort by:</label>
+                    <select id="sort-by" name="sort_by">
+                        <option value="default" {% if sort_by == 'default' or not sort_by %}selected{% endif %}>Default</option>
+                        <option value="release_date_asc" {% if sort_by == 'release_date_asc' %}selected{% endif %}>Release Date (Ascending)</option>
+                        <option value="release_date_desc" {% if sort_by == 'release_date_desc' %}selected{% endif %}>Release Date (Descending)</option>
+                        <option value="runtime_asc" {% if sort_by == 'runtime_asc' %}selected{% endif %}>Runtime (Ascending)</option>
+                        <option value="runtime_desc" {% if sort_by == 'runtime_desc' %}selected{% endif %}>Runtime (Descending)</option>
+                    </select>
                 </div>
             </div>
+
+            <form class="advanced-filters" method="GET" action="{{ url_for('profile') }}">
+                <div class="filter-row">
+                    <div class="genre-filter-container">
+                        <div class="genre-filter-wrapper">
+                            <select id="genre-filter" name="genres" multiple="multiple">
+                                {% for genre in all_genres %}
+                                    <option value="{{ genre }}" {% if genre in selected_genres %}selected{% endif %}>{{ genre }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="button" id="filter-btn" class="filter-button">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label for="year-min">Year:</label>
+                        <input type="number" id="year-min" name="year_min" min="{{ min_year }}" max="{{ max_year }}" value="{{ year_min if year_min is not none else min_year }}">
+                        <span>-</span>
+                        <input type="number" id="year-max" name="year_max" min="{{ min_year }}" max="{{ max_year }}" value="{{ year_max if year_max is not none else max_year }}">
+                    </div>
+                    <div class="filter-group">
+                        <label for="runtime-min">Runtime:</label>
+                        <input type="number" id="runtime-min" name="runtime_min" min="{{ min_runtime }}" max="{{ max_runtime }}" value="{{ runtime_min if runtime_min is not none else '' }}">
+                        <span>-</span>
+                        <input type="number" id="runtime-max" name="runtime_max" min="{{ min_runtime }}" max="{{ max_runtime }}" value="{{ runtime_max if runtime_max is not none else '' }}">
+                    </div>
+                    <div class="filter-group">
+                        <label for="language-filter">Language:</label>
+                        <select id="language-filter" name="language">
+                            <option value="">All</option>
+                            {% for lang in all_languages %}
+                            <option value="{{ lang }}" {% if selected_language == lang %}selected{% endif %}>{{ lang }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="filter-button"><i class="fas fa-filter"></i> Apply</button>
+                </div>
+            </form>
 
             <div class="section-header">
                 <h2>Movie Library</h2>
@@ -97,8 +134,11 @@
                         </div>
                     </div>
                     <div class="movie-info">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <p class="release-date" style="margin: 0;">{{ movie.release_date }}</p>
+                            <p class="release-date" style="margin: 0;">{{ movie.runtime }} min</p>
+                        </div>
                         <h3>{{ movie.title }}</h3>
-                        <p class="release-date">{{ movie.release_date }}</p>
                         <div class="genres">
                             {% for genre in movie.genres %}
                             <span class="genre-tag">{{ genre }}</span>
@@ -112,18 +152,27 @@
             {% if total_pages > 1 %}
             <div class="pagination">
                 {% if current_page > 1 %}
-                <a href="{{ url_for('profile', page=current_page-1, search=search_term) }}" class="page-link">&laquo; Previous</a>
+                <a href="{{ url_for('profile', page=current_page-1, search=search_term, genres=(','.join(selected_genres) if selected_genres else None), language=selected_language, runtime_min=runtime_min, runtime_max=runtime_max, year_min=year_min, year_max=year_max, sort_by=sort_by) }}" class="page-link">&laquo; Previous</a>
                 {% endif %}
                 
                 <span class="page-info">Page {{ current_page }} of {{ total_pages }}</span>
                 
                 <div class="page-navigation">
                     {% if current_page < total_pages %}
-                    <a href="{{ url_for('profile', page=current_page+1, search=search_term) }}" class="page-link">Next &raquo;</a>
+                    <a href="{{ url_for('profile', page=current_page+1, search=search_term, genres=(','.join(selected_genres) if selected_genres else None), language=selected_language, runtime_min=runtime_min, runtime_max=runtime_max, year_min=year_min, year_max=year_max, sort_by=sort_by) }}" class="page-link">Next &raquo;</a>
                     {% endif %}
                     <div class="page-jump">
                         <input type="number" id="page-input" min="1" max="{{ total_pages }}" placeholder="Go to page..." value="{{ current_page }}">
-                        <button id="jump-btn" class="page-link">Go</button>
+                        <button id="jump-btn" class="page-link"
+                            data-search="{{ search_term }}"
+                            data-genres="{{ ','.join(selected_genres) if selected_genres else '' }}"
+                            data-language="{{ selected_language }}"
+                            data-runtime-min="{{ runtime_min }}"
+                            data-runtime-max="{{ runtime_max }}"
+                            data-year-min="{{ year_min }}"
+                            data-year-max="{{ year_max }}"
+                            data-sort-by="{{ sort_by }}"
+                        >Go</button>
                     </div>
                 </div>
             </div>
@@ -200,6 +249,15 @@
             if (page >= 1 && page <= {{ total_pages }}) {
                 const urlParams = new URLSearchParams(window.location.search);
                 urlParams.set('page', page);
+                // Preserve filters and sort_by
+                urlParams.set('search', document.getElementById('jump-btn').dataset.search);
+                urlParams.set('genres', document.getElementById('jump-btn').dataset.genres);
+                urlParams.set('language', document.getElementById('jump-btn').dataset.language);
+                urlParams.set('runtime_min', document.getElementById('jump-btn').dataset.runtimeMin);
+                urlParams.set('runtime_max', document.getElementById('jump-btn').dataset.runtimeMax);
+                urlParams.set('year_min', document.getElementById('jump-btn').dataset.yearMin);
+                urlParams.set('year_max', document.getElementById('jump-btn').dataset.yearMax);
+                urlParams.set('sort_by', document.getElementById('jump-btn').dataset.sortBy);
                 window.location.href = `${window.location.pathname}?${urlParams.toString()}`;
             }
         });

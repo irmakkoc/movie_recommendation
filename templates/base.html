@@ -35,7 +35,8 @@
                            href="{{ url_for('index') }}">Get Recommendations</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#about">About</a>
+                        <a class="nav-link {% if request.endpoint == 'about' %}active{% endif %}" 
+                           href="{{ url_for('about') }}">About</a>
                     </li>
                 </ul>
                 <div class="navbar-nav">
