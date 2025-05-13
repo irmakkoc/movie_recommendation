@@ -253,6 +253,11 @@ input[type="text"] {
     min-width: 600px;
 }
 
+.auth-form input[type="text"] {
+    min-width: auto !important;
+}
+
+
 button {
     width: 55px;
     height: 55px;
