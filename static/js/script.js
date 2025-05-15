@@ -7,6 +7,74 @@ document.addEventListener('DOMContentLoaded', () => {
     const excludeAnimationCheckbox = document.getElementById('excludeAnimation');
     let lastInputText = null;  // Store the last input text instead of emotions
 
+    // --- Input section movement logic ---
+    function moveInputSectionToFloating() {
+        const inputSection = document.getElementById('inputForm');
+        const refreshButton = document.getElementById('refreshButton');
+        if (inputSection && refreshButton) {
+            inputSection.classList.add('input-section-floating');
+            // Move inputSection after refreshButton
+            refreshButton.parentNode.insertBefore(inputSection, refreshButton.nextSibling);
+        }
+    }
+
+    function moveInputSectionToBottom() {
+        const inputSection = document.getElementById('inputForm');
+        inputSection.classList.remove('input-section-floating');
+        // Move it to the end of the container (so it's at the bottom)
+        const container = document.querySelector('.container');
+        if (container) {
+            container.parentNode.appendChild(inputSection);
+        } else {
+            document.body.appendChild(inputSection);
+        }
+    }
+
+    // On page load, ensure input is at the bottom
+    moveInputSectionToBottom();
+
+    // --- Loading card logic ---
+    function showMovionLoading() {
+        let card = document.getElementById('movion-loading-card');
+        if (!card) {
+            card = document.createElement('div');
+            card.id = 'movion-loading-card';
+            card.innerHTML = `
+                <div class="spinner"></div>
+                <div>MoviOn is trying to understand your emotions...</div>
+            `;
+            // Append to the main container
+            const container = document.querySelector('.container');
+            if (container) {
+                container.appendChild(card);
+            } else {
+                document.body.appendChild(card);
+            }
+        }
+        card.style.display = 'flex';
+    }
+
+    function hideMovionLoading() {
+        const card = document.getElementById('movion-loading-card');
+        if (card) card.style.display = 'none';
+    }
+
+    // --- Error box logic ---
+    function showMovionError(message) {
+        let box = document.getElementById('movion-error-box');
+        if (!box) {
+            box = document.createElement('div');
+            box.id = 'movion-error-box';
+            document.body.appendChild(box);
+        }
+        box.innerHTML = `
+            <span>${message}</span>
+            <button class="close-btn" onclick="this.parentNode.style.display='none'">&times;</button>
+        `;
+        box.style.display = 'flex';
+        setTimeout(() => { if (box) box.style.display = 'none'; }, 4000);
+    }
+
     async function displayMovies(data) {
         // Clear previous recommendations
         recommendationsDiv.innerHTML = '';
@@ -38,10 +106,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Get the first emotion and its category
         const firstEmotion = data.predicted_emotion[0];
         const emotionCategory = data.emotion_category || firstEmotion;  // Use provided category or fallback to first emotion
-        emotionDiv.textContent = `ML Model predicts your mood is: ${emotionCategory}`;
+        emotionDiv.textContent = `ML Model predicts you are feeling: ${emotionCategory}`;
 
         // Show refresh button
         refreshButton.style.display = 'flex';
+        // Move input section under the refresh button
+        moveInputSectionToFloating();
+        // Hide loading overlay
+        hideMovionLoading();
     }
 
     function createMovieCard(movie) {
@@ -72,64 +144,100 @@ document.addEventListener('DOMContentLoaded', () => {
         therapyText.className = 'therapy-text';
         therapyText.textContent = movie.tag;
 
+        // --- Add buttons under the tag ---
+        const actionsDiv = document.createElement('div');
+        actionsDiv.style.display = 'flex';
+        actionsDiv.style.flexDirection = 'column';
+        actionsDiv.style.alignItems = 'stretch';
+        actionsDiv.style.gap = '8px';
+        actionsDiv.style.marginTop = '12px';
+
+        // Only show buttons if user is logged in
+        if (window.USER_IS_AUTHENTICATED === true || window.USER_IS_AUTHENTICATED === 'true') {
+            // Track state for this card
+            let isWatched = false;
+            let inWatchlist = false;
+
+            // Mark as Watched button
+            const watchedBtn = document.createElement('button');
+            watchedBtn.className = 'recommend-action-btn';
+            watchedBtn.innerHTML = '<i class="far fa-circle"></i> Mark as Watched';
+            watchedBtn.onclick = async (e) => {
+                e.stopPropagation();
+                if (inWatchlist) {
+                    showMovionError("Remove from Watch Later before marking as watched.");
+                    return;
+                }
+                try {
+                    const res = await fetch(`/toggle_watched/${encodeURIComponent(movie.title)}`, { method: 'POST' });
+                    let data;
+                    try {
+                        data = await res.json();
+                    } catch (err) {
+                        data = {};
+                    }
+                    if (res.status === 400 && data.message) {
+                        showMovionError(data.message);
+                    } else if (data.success) {
+                        isWatched = data.is_watched;
+                        if (isWatched) {
+                            watchedBtn.innerHTML = '<i class="fas fa-check"></i> Marked!';
+                        } else {
+                            watchedBtn.innerHTML = '<i class="far fa-circle"></i> Mark as Watched';
+                        }
+                    } else {
+                        watchedBtn.innerHTML = 'Error';
+                    }
+                } catch (err) {
+                    watchedBtn.innerHTML = 'Error';
+                }
+            };
+
+            // Watch Later button
+            const watchLaterBtn = document.createElement('button');
+            watchLaterBtn.className = 'recommend-action-btn';
+            watchLaterBtn.innerHTML = '<i class="far fa-bookmark"></i> Add to Watch Later';
+            watchLaterBtn.onclick = async (e) => {
+                e.stopPropagation();
+                if (isWatched) {
+                    showMovionError("Remove from Watched before adding to Watch Later.");
+                    return;
+                }
+                try {
+                    const res = await fetch(`/toggle_watchlist/${encodeURIComponent(movie.title)}`, { method: 'POST' });
+                    let data;
+                    try {
+                        data = await res.json();
+                    } catch (err) {
+                        data = {};
+                    }
+                    if (res.status === 400 && data.message) {
+                        showMovionError(data.message);
+                    } else if (data.success) {
+                        inWatchlist = data.in_watchlist || data.in_watchlist === true;
+                        if (inWatchlist) {
+                            watchLaterBtn.innerHTML = '<i class="fas fa-check"></i> Added!';
+                        } else {
+                            watchLaterBtn.innerHTML = '<i class="far fa-bookmark"></i> Add to Watch Later';
+                        }
+                    } else {
+                        watchLaterBtn.innerHTML = 'Error';
+                    }
+                } catch (err) {
+                    watchLaterBtn.innerHTML = 'Error';
+                }
+            };
+
+            actionsDiv.appendChild(watchedBtn);
+            actionsDiv.appendChild(watchLaterBtn);
+        }
+        // --- End buttons ---
+
         movieFront.appendChild(image);
         movieFront.appendChild(name);
         movieFront.appendChild(duration);
         movieFront.appendChild(therapyText);
-        if (window.USER_IS_AUTHENTICATED === true || window.USER_IS_AUTHENTICATED === 'true') {
-            const movieActions = document.createElement('div');
-            movieActions.className = 'movie-actions';
-            const watchToggle = document.createElement('button');
-            watchToggle.className = 'watch-toggle';
-            watchToggle.dataset.movieTitle = movie.title;
-            watchToggle.innerHTML = '<i class="far fa-circle"></i> Mark as Watched';
-            const watchlistToggle = document.createElement('button');
-            watchlistToggle.className = 'watchlist-toggle';
-            watchlistToggle.dataset.movieTitle = movie.title;
-            watchlistToggle.innerHTML = '<i class="far fa-bookmark"></i> Add to Watch Later';
-            movieActions.appendChild(watchToggle);
-            movieActions.appendChild(watchlistToggle);
-            movieFront.appendChild(movieActions);
-            // Add event listeners for the action buttons
-            watchToggle.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                try {
-                    const response = await fetch(`/toggle_watched/${encodeURIComponent(movie.title)}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    });
-                    const data = await response.json();
-                    if (data.success) {
-                        watchToggle.innerHTML = data.is_watched ? 
-                            '<i class="fas fa-check-circle"></i> Watched' : 
-                            '<i class="far fa-circle"></i> Mark as Watched';
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                }
-            });
-            watchlistToggle.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                try {
-                    const response = await fetch(`/toggle_watchlist/${encodeURIComponent(movie.title)}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    });
-                    const data = await response.json();
-                    if (data.success) {
-                        watchlistToggle.innerHTML = data.in_watchlist ? 
-                            '<i class="fas fa-bookmark"></i> In Watch Later' : 
-                            '<i class="far fa-bookmark"></i> Add to Watch Later';
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                }
-            });
-        }
+        movieFront.appendChild(actionsDiv);
         
         // Only add trailer back side and flip if trailer_url is present
         if (movie.trailer_url) {
@@ -219,6 +327,9 @@ document.addEventListener('DOMContentLoaded', () => {
         moodInput.disabled = true;
         submitButton.disabled = true;
 
+        // Show loading overlay
+        showMovionLoading();
+
         try {
             const response = await fetch('/predict', {
                 method: 'POST',
@@ -256,6 +367,8 @@ document.addEventListener('DOMContentLoaded', () => {
             headerDiv.style.padding = '0';
             headerTitle.style.fontSize = '3.5rem';
             headerTitle.style.marginBottom = '15px';
+            // Hide loading overlay on error
+            hideMovionLoading();
         } finally {
             // Re-enable input and button
             moodInput.disabled = false;
@@ -263,4 +376,13 @@ document.addEventListener('DOMContentLoaded', () => {
             moodInput.value = '';
         }
     });
+
+    // Auto-resize for the mood textarea
+    const moodTextarea = document.getElementById('mood');
+    if (moodTextarea) {
+        moodTextarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    }
 });
