@@ -16,7 +16,9 @@
     {% include 'header.html' %}
     
     <div class="header">
-        <h1>Movie Recommendation</h1>
+        <h1 style="font-family: 'Fira Code', 'Courier New', monospace;">Movie Recommendations</h1>
+        <h1 style="font-family: 'Fira Code', 'Courier New', monospace;">Based on Your Emotion</h1>
+        
     </div>
 
     <div class="container">
@@ -30,9 +32,9 @@
     <form class="input-section" id="inputForm">
         <div class="checkbox-container">
             <input type="checkbox" id="excludeAnimation" name="excludeAnimation">
-            <label for="excludeAnimation">Exclude animation movies</label>
+            <label for="excludeAnimation" style="font-family: 'Fira Code', 'Courier New', monospace;">Exclude animation movies</label>
         </div>
-        <input id="mood" type="text" placeholder="Tell us about your day, mood, feelings..." />
+        <textarea id="mood" rows="1" placeholder="Tell us about your day, mood, feelings..."></textarea>
         <button type="submit" id="submit">➤</button>
     </form>
 

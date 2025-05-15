@@ -94,6 +94,7 @@
                         </select>
                     </div>
                     <button type="submit" class="filter-button"><i class="fas fa-filter"></i> Apply</button>
+                    <button type="button" id="clear-filters-btn" class="filter-button" style="margin-left: 10px;"><i class="fas fa-times"></i> Clear All Filters</button>
                 </div>
             </form>
 
@@ -219,28 +220,6 @@
             });
         });
 
-        // Filter buttons
-        document.querySelectorAll('.filter-btn').forEach(button => {
-            button.addEventListener('click', () => {
-                document.querySelector('.filter-btn.active').classList.remove('active');
-                button.classList.add('active');
-                
-                // If "All Movies" button is clicked, reset everything and go to first page
-                if (button.dataset.filter === 'all') {
-                    // Clear genre selections
-                    $('#genre-filter').val(null).trigger('change');
-                    // Clear search
-                    document.getElementById('movie-search').value = '';
-                    // Redirect to first page without any filters
-                    window.location.href = "{{ url_for('profile') }}";
-                } else {
-                    const status = button.dataset.filter;
-                    document.querySelectorAll('.movie-card').forEach(card => {
-                        card.style.display = (status === card.dataset.status) ? 'block' : 'none';
-                    });
-                }
-            });
-        });
 
         // Page jump functionality
         document.getElementById('jump-btn').addEventListener('click', () => {
@@ -268,6 +247,81 @@
                 document.getElementById('jump-btn').click();
             }
         });
+
+        // ---- START OF MODIFIED/REPLACED SCRIPT FOR All/Watched/Watch Later BUTTONS ----
+        function applyClientSideViewFilter() {
+            let activeButton = document.querySelector('.movies-section .filters .filter-btn.active');
+            
+            // Ensure an active button, defaulting to 'all' if somehow none is set initially.
+            if (!activeButton && document.querySelector('.movies-section .filters .filter-btn')) {
+                const allButton = document.querySelector('.movies-section .filters .filter-btn[data-filter="all"]');
+                if (allButton) {
+                    allButton.classList.add('active');
+                    activeButton = allButton;
+                }
+            }
+
+            if (!activeButton) {
+                return; // Exit if no active button can be determined
+            }
+
+            const activeFilterType = activeButton.dataset.filter;
+            document.querySelectorAll('.movies-grid .movie-card').forEach(card => {
+                const cardStatus = card.dataset.status;
+                let showCard = false;
+
+                if (activeFilterType === 'all') {
+                    // For "All Movies", show if watched or unwatched. Hide if its primary status is 'watchlater'.
+                    showCard = true;
+                } else if (activeFilterType === 'watched') {
+                    showCard = (cardStatus === 'watched');
+                } else if (activeFilterType === 'watchlater') {
+                    showCard = (cardStatus === 'watchlater');
+                } else {
+                    // Default for any unexpected filter type, or if card has no status
+                    showCard = true; 
+                }
+                card.style.display = showCard ? 'block' : 'none';
+            });
+        }
+
+        document.querySelectorAll('.movies-section .filters .filter-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const previouslyActiveButton = document.querySelector('.movies-section .filters .filter-btn.active');
+                if (previouslyActiveButton) {
+                    previouslyActiveButton.classList.remove('active');
+                }
+                button.classList.add('active');
+
+                const filterType = button.dataset.filter;
+
+                if (filterType === 'all') {
+                    // "All Movies" button clears server-side filters and reloads.
+                    // UI updates for form fields happen before reload.
+                    const genreFilterElement = document.getElementById('genre-filter');
+                    if (genreFilterElement && typeof $ !== 'undefined' && $.fn.select2) {
+                         $('#genre-filter').val(null).trigger('change');
+                    }
+                    const movieSearchInputElement = document.getElementById('movie-search');
+                    if (movieSearchInputElement) {
+                         movieSearchInputElement.value = '';
+                    }
+                    window.location.href = "{{ url_for('profile') }}"; // Reloads to base profile page
+                } else {
+                    // For 'watched' or 'watchlater', apply filter client-side without page reload
+                    applyClientSideViewFilter();
+                }
+            });
+        });
+
+        // Initial application of the filter when the page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', applyClientSideViewFilter);
+        } else {
+            // DOMContentLoaded has already fired
+            applyClientSideViewFilter();
+        }
+        // ---- END OF MODIFIED/REPLACED SCRIPT ----
     </script>
     <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
 </body>
