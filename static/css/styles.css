@@ -262,7 +262,7 @@ input[type="text"] {
     border: 1px solid #444;
     border-radius: 25px;
     outline: none;
-    min-width: 600px;
+    min-width: auto !important;
 }
 
 button {
