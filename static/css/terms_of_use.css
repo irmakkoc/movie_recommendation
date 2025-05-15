@@ -1,0 +1,55 @@
+/* Terms of Use Page Styles */
+.terms-container {
+    max-width: 900px;
+    margin: 40px auto;
+    background: #254743;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    padding: 2.5rem 2.5rem 2rem 2.5rem;
+    color: #fff;
+}
+.terms-container h1 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    color: #e3dcd2;
+}
+.terms-container p,
+.terms-container li {
+    color: #e3dcd2;
+    font-size: 1.1rem;
+    line-height: 1.7;
+}
+.terms-container section {
+    margin-bottom: 2rem;
+}
+.terms-container h2 {
+    color: #e3dcd2;
+    font-size: 1.4rem;
+    margin-bottom: 0.7rem;
+    font-weight: 600;
+}
+.terms-container ul {
+    margin-left: 1.5rem;
+    padding-left: 1.2rem;
+}
+.terms-container a {
+    color: #e3dcd2;
+    text-decoration: underline;
+    transition: color 0.2s;
+}
+.terms-container a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+@media (max-width: 600px) {
+    .terms-container {
+        padding: 1.2rem 0.7rem 1rem 0.7rem;
+    }
+    .terms-container h1 {
+        font-size: 2rem;
+    }
+    .terms-container h2 {
+        font-size: 1.1rem;
+    }
+} 

@@ -624,7 +624,7 @@
     .filter-row {
         flex-wrap: wrap;
         gap: 1rem;
-    }
+}
 
     .genre-filter-container {
         width: 100%;
@@ -632,7 +632,7 @@
 
     .filter-group {
         width: auto;
-    }
+}
 
     .filter-button {
         margin-left: 0;
@@ -642,12 +642,12 @@
 @media (max-width: 768px) {
     .search-filters {
         flex-direction: column;
-    }
+}
 
     .search-bar,
     .genre-filter-container {
         width: 100%;
-    }
+}
 
     .pagination {
         flex-direction: column;
