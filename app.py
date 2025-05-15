@@ -540,7 +540,7 @@ def profile():
         current_page_df = movies_df.iloc[start_idx:end_idx]
         
         # Get user's watched movies and watchlist
-        watched_movies = {movie.movie_title for movie in current_user.watched_movies}
+        watched_movies = {movie.movie_title for movie in WatchedMovie.query.filter_by(user_id=current_user.id).all()}
         try:
             watchlist_movies = {movie.movie_title for movie in WatchLaterMovie.query.filter_by(user_id=current_user.id).all()}
         except Exception:
@@ -563,13 +563,15 @@ def profile():
         min_year = int(years.min()) if not years.empty else 1900
         max_year = int(years.max()) if not years.empty else 2024
         
-        # Prepare movies data for template
+        # Prepare movies data for template (for All Movies section)
         movies = []
         filtered_watched_count = 0  # Counter for watched movies in filtered results
         main_movie_titles = set()
         for _, movie in current_page_df.iterrows():
             poster_url = get_cached_poster_url(movie['title'])
             is_watched = movie['title'] in watched_movies
+            in_watchlist = movie['title'] in watchlist_movies
+            # Do NOT filter out movies that are in watched or watchlist
             if is_watched:
                 filtered_watched_count += 1
             movies.append({
@@ -579,37 +581,39 @@ def profile():
                 'runtime': movie.get('runtime', ''),
                 'genres': movie['genres'],
                 'is_watched': is_watched,
-                'in_watchlist': movie['title'] in watchlist_movies
+                'in_watchlist': in_watchlist
             })
             main_movie_titles.add(movie['title'])
 
-        # Add watched movies not in main movie list
-        for watched_title in watched_movies:
-            if watched_title not in main_movie_titles:
-                movies.append({
-                    'title': watched_title,
-                    'poster_path': get_cached_poster_url(watched_title),
+        # Build watched_movies_full: all movies in user's WatchedMovie table
+        watched_movies_db = WatchedMovie.query.filter_by(user_id=current_user.id).all()
+        watched_movies_full = []
+        for watched in watched_movies_db:
+            # Try to find in dataset
+            movie_row = movies_df[movies_df['title'] == watched.movie_title]
+            if not movie_row.empty:
+                movie = movie_row.iloc[0]
+                watched_movies_full.append({
+                    'title': movie['title'],
+                    'poster_path': get_cached_poster_url(movie['title']),
+                    'release_date': movie['release_date'],
+                    'runtime': movie.get('runtime', ''),
+                    'genres': movie['genres'],
+                    'is_watched': True,
+                    'in_watchlist': movie['title'] in watchlist_movies
+                })
+            else:
+                # Not in dataset, show minimal info
+                watched_movies_full.append({
+                    'title': watched.movie_title,
+                    'poster_path': get_cached_poster_url(watched.movie_title),
                     'release_date': '',
                     'runtime': '',
                     'genres': [],
                     'is_watched': True,
-                    'in_watchlist': False,
-                    'not_in_main': True
+                    'in_watchlist': False
                 })
-        # Add watchlist movies not in main movie list and not already added
-        for watchlist_title in watchlist_movies:
-            if watchlist_title not in main_movie_titles and watchlist_title not in watched_movies:
-                movies.append({
-                    'title': watchlist_title,
-                    'poster_path': get_cached_poster_url(watchlist_title),
-                    'release_date': '',
-                    'runtime': '',
-                    'genres': [],
-                    'is_watched': False,
-                    'in_watchlist': True,
-                    'not_in_main': True
-                })
-        
+
         # Calculate total pages
         total_pages = max((total_movies + per_page - 1) // per_page, 1)  # Ensure at least 1 page
         
@@ -619,6 +623,7 @@ def profile():
         return render_template(
             'profile.html',
             movies=movies,
+            watched_movies_full=watched_movies_full,
             current_page=page,
             total_pages=total_pages,
             total_movies=total_movies,
@@ -651,6 +656,7 @@ def profile():
         return render_template(
             'profile.html',
             movies=[],
+            watched_movies_full=[],
             current_page=1,
             total_pages=1,
             total_movies=0,
@@ -692,6 +698,81 @@ def recommend_movies(emotion):
         recommended = [movie for movie in recommended if movie['title'] not in watched_titles]
     
     return recommended
+
+@app.route('/api/watched_movies', methods=['GET'])
+@login_required
+def api_watched_movies():
+    # Load movies from CSV
+    movies_df = pd.read_csv("filtered_movies.csv")
+    watched_movies = WatchedMovie.query.filter_by(user_id=current_user.id).all()
+    result = []
+    for watched in watched_movies:
+        movie_row = movies_df[movies_df['title'] == watched.movie_title]
+        if not movie_row.empty:
+            movie = movie_row.iloc[0]
+            # Ensure all fields are standard Python types
+            genres = movie['genres']
+            if isinstance(genres, str):
+                genres = [g.strip() for g in genres.split(',') if g.strip()]
+            result.append({
+                'title': str(movie['title']),
+                'poster_path': str(get_cached_poster_url(movie['title'])),
+                'release_date': str(movie['release_date']),
+                'runtime': int(movie['runtime']) if pd.notnull(movie['runtime']) else '',
+                'genres': [str(g) for g in genres],
+                'is_watched': True,
+                'in_watchlist': False
+            })
+        else:
+            result.append({
+                'title': str(watched.movie_title),
+                'poster_path': str(get_cached_poster_url(watched.movie_title)),
+                'release_date': '',
+                'runtime': '',
+                'genres': [],
+                'is_watched': True,
+                'in_watchlist': False
+            })
+    return jsonify(result)
+
+@app.route('/api/watch_later_movies', methods=['GET'])
+@login_required
+def api_watch_later_movies():
+    # Load movies from CSV
+    movies_df = pd.read_csv("filtered_movies.csv")
+    watch_later_movies = WatchLaterMovie.query.filter_by(user_id=current_user.id).all()
+    result = []
+    for watchlater in watch_later_movies:
+        movie_row = movies_df[movies_df['title'] == watchlater.movie_title]
+        if not movie_row.empty:
+            movie = movie_row.iloc[0]
+            genres = movie['genres']
+            if isinstance(genres, str):
+                genres = [g.strip() for g in genres.split(',') if g.strip()]
+            result.append({
+                'title': str(movie['title']),
+                'poster_path': str(get_cached_poster_url(movie['title'])),
+                'release_date': str(movie['release_date']),
+                'runtime': int(movie['runtime']) if pd.notnull(movie['runtime']) else '',
+                'genres': [str(g) for g in genres],
+                'is_watched': False,
+                'in_watchlist': True
+            })
+        else:
+            result.append({
+                'title': str(watchlater.movie_title),
+                'poster_path': str(get_cached_poster_url(watchlater.movie_title)),
+                'release_date': '',
+                'runtime': '',
+                'genres': [],
+                'is_watched': False,
+                'in_watchlist': True
+            })
+    return jsonify(result)
+
+@app.route('/terms-of-use')
+def terms_of_use():
+    return render_template('terms_of_use.html')
 
 if __name__ == '__main__':
     print("Starting MoviOn...")
