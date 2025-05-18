@@ -138,11 +138,14 @@ def get_emotion():
 
         text = data["text"]
         exclude_animation = data.get("excludeAnimation", False)
-        predicted_emotions = predict(text)
+        
+        # Get prediction result with spell correction info
+        prediction_result = predict(text)
+        predicted_emotions = prediction_result["predictions"]
         print("🎭 Predicted emotion:", predicted_emotions)
 
         # Use the first predicted emotion for movie recommendations
-        primary_emotion = predicted_emotions[0] if predicted_emotions else "neutral"
+        primary_emotion = predicted_emotions[0][0] if predicted_emotions else "neutral"
         recommended_movies = recommend_movies(primary_emotion)
         
         # Filter out animation movies if requested
@@ -165,7 +168,7 @@ def get_emotion():
             # Create IMDb URL if ID exists
             imdb_url = f"https://www.imdb.com/title/{movie['imdb_id']}" if movie["imdb_id"] else None
 
-            # Get trailer URL (you'll need to implement this function)
+            # Get trailer URL
             trailer_url = get_movie_trailer(movie["title"])
 
             movies_with_metadata.append({
@@ -184,9 +187,14 @@ def get_emotion():
         emotion_category = get_emotion_category(primary_emotion)
 
         return jsonify({
-            "predicted_emotion": predicted_emotions,
+            "predicted_emotion": [emotion[0] for emotion in predicted_emotions],
             "emotion_category": emotion_category,
-            "movies": movies_with_metadata
+            "movies": movies_with_metadata,
+            "spell_correction": {
+                "was_corrected": prediction_result["was_corrected"],
+                "original_text": prediction_result["original_text"],
+                "corrected_text": prediction_result["corrected_text"]
+            }
         })
 
     except Exception as e:
