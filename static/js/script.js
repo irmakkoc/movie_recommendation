@@ -7,6 +7,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const excludeAnimationCheckbox = document.getElementById('excludeAnimation');
     let lastInputText = null;  // Store the last input text instead of emotions
 
+    // Set user-logged-in class on body based on authentication status
+    if (window.USER_IS_AUTHENTICATED === true || window.USER_IS_AUTHENTICATED === 'true') {
+        document.body.classList.add('user-logged-in');
+    } else {
+        document.body.classList.remove('user-logged-in');
+    }
+
     // --- Input section movement logic ---
     function moveInputSectionToFloating() {
         const inputSection = document.getElementById('inputForm');
@@ -79,6 +86,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear previous recommendations
         recommendationsDiv.innerHTML = '';
         
+        // Clear previous info container if it exists
+        const previousInfoContainer = document.querySelector('.info-container');
+        if (previousInfoContainer) {
+            previousInfoContainer.remove();
+        }
+        
         // Create and display movie cards
         data.movies.forEach((movie, index) => {
             const movieDiv = createMovieCard(movie);
@@ -95,18 +108,39 @@ document.addEventListener('DOMContentLoaded', () => {
         recommendationsDiv.style.display = 'flex';
         recommendationsDiv.style.opacity = '1';
 
-        // Update or add predicted emotion text
-        let emotionDiv = document.querySelector('.predicted-emotion');
-        if (!emotionDiv) {
-            emotionDiv = document.createElement('div');
-            emotionDiv.classList.add('predicted-emotion');
-            recommendationsDiv.parentNode.insertBefore(emotionDiv, recommendationsDiv.nextSibling);
+        // Create a container for spell correction and emotion prediction
+        const infoContainer = document.createElement('div');
+        infoContainer.className = 'info-container';
+        
+        // Show spell correction info if text was corrected
+        if (data.spell_correction && data.spell_correction.was_corrected) {
+            const correctionDiv = document.createElement('div');
+            correctionDiv.className = 'spell-correction-info';
+            correctionDiv.innerHTML = `
+                <div class="correction-message">
+                    <span>MoviOn corrected some spelling to better understand your emotions:</span>
+                </div>
+                <div class="correction-details">
+                    <div class="original-text">Original: "${data.spell_correction.original_text}"</div>
+                    <div class="corrected-text">Corrected: "${data.spell_correction.corrected_text}"</div>
+                </div>
+            `;
+            infoContainer.appendChild(correctionDiv);
         }
 
+        // Add predicted emotion text
+        const emotionDiv = document.createElement('div');
+        emotionDiv.classList.add('predicted-emotion');
+        
         // Get the first emotion and its category
         const firstEmotion = data.predicted_emotion[0];
         const emotionCategory = data.emotion_category || firstEmotion;  // Use provided category or fallback to first emotion
         emotionDiv.textContent = `ML Model predicts you are feeling: ${emotionCategory}`;
+        
+        infoContainer.appendChild(emotionDiv);
+        
+        // Insert the info container after the recommendations
+        recommendationsDiv.parentNode.insertBefore(infoContainer, recommendationsDiv.nextSibling);
 
         // Show refresh button
         refreshButton.style.display = 'flex';
