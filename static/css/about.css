@@ -1,5 +1,8 @@
 /* About Page Styles */
 .about-page {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
     padding-top: 80px;
     min-height: 100vh;
     background-color: #e3dcd2;
@@ -9,13 +12,20 @@
 .hero-section {
     background: linear-gradient(135deg, #013328, #024d3c);
     color: #ffffff;
-    padding: 4rem 2rem;
+    padding: 10rem 0.8rem;
     text-align: center;
+    min-height: unset;
+}
+
+.hero-section h1,
+.hero-section .subtitle {
+    margin-top: 0;
+    margin-bottom: 0.2em;
+    
 }
 
 .hero-section h1 {
     font-size: 3.5rem;
-    margin-bottom: 1rem;
     color: #e3dcd2;
 }
 
@@ -27,7 +37,7 @@
 
 /* Mission Section */
 .mission-section {
-    padding: 4rem 2rem;
+    padding: 1.2rem 0.8rem;
     background-color: #ffffff;
 }
 
@@ -70,15 +80,25 @@
 
 /* Features Section */
 .features-section {
-    padding: 4rem 2rem;
+    padding: 1.2rem 0.8rem;
     background-color: #013328;
+    height: 650px;
 }
 
 .features-section h2 {
     text-align: center;
     color: #ffffff;
     font-size: 2.5rem;
-    margin-bottom: 3rem;
+    margin-bottom: 1.5rem;
+    margin-top: 6rem;
+}
+
+.features-section .features-text {
+    text-align: center;
+    color: #ffffff;
+    font-size: 1.2rem;
+    margin-bottom: 2.5rem;
+    margin-top: 6rem;
 }
 
 .features-grid {
@@ -121,8 +141,9 @@
 
 /* Team Section */
 .team-section {
-    padding: 4rem 2rem;
+    padding: 1.2rem 0.8rem;
     background-color: #ffffff;
+    height: 500px;
 }
 
 .team-section h2 {
@@ -130,7 +151,9 @@
     color: #013328;
     font-size: 2.5rem;
     margin-bottom: 3rem;
+    margin-top: 2.5rem;
 }
+
 
 .team-grid {
     display: grid;
@@ -161,6 +184,43 @@
 .member-info p {
     color: #013328;
     font-size: 1rem;
+}
+
+.team-intro-card {
+    background: #f7f7f7;
+    border-radius: 18px;
+    box-shadow: 0 2px 12px rgba(1, 51, 40, 0.08);
+    padding: 2rem 1.5rem;
+    margin: 2rem auto 2.5rem auto;
+    max-width: 700px;
+    text-align: center;
+    border-top: 4px solid #013328;
+}
+
+.team-intro-card h2 {
+    color: #013328;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.team-intro-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+}
+
+.team-icon {
+    font-size: 2.5rem;
+    color: #013328;
+    margin-bottom: 0.5rem;
+}
+
+.team-intro-card p {
+    color: #013328;
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin: 0;
 }
 
 /* Responsive Design */
@@ -197,4 +257,70 @@
     .features-grid {
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     }
+}
+
+/* Center all section titles globally for about page */
+.about-page h1,
+.about-page p,
+.about-page h2,
+.about-page h3,
+.about-page section h1,
+.about-page section h2,
+.about-page section h3,
+.about-page .container > h1,
+.about-page .container > h2,
+.about-page .container > h3 {
+    text-align: center !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+/* Remove any conflicting text-align from .team-section p if present */
+.team-section p {
+    text-align: left;
+}
+
+/* Remove box structure from meet the team section */
+.meet-team-box, .about-team-box, .about-section .meet-team-box, .about-section .about-team-box {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Optionally, remove any extra spacing or centering from the box */
+.meet-team-box * {
+    text-align: left !important;
+}
+
+/* Letter Section */
+.letter-section {
+    padding: 2rem 0.8rem;
+    background-color: #013328;
+    height: 650px;
+}
+.letter-section h2 {
+    text-align: center;
+    color: #fff;
+    font-size: 2.2rem;
+    margin-bottom: 2rem;
+}
+.letter-section p {
+    background: rgba(1, 51, 40, 0.07);
+    border-radius: 14px;
+    padding: 2rem 1.5rem;
+    color: #ffffff;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    box-shadow: 0 2px 12px rgba(1, 51, 40, 0.04);
+    margin: 0 auto;
+    max-width: 700px;
+}
+.letter-section p span {
+    display: block;
+    text-align: right;
+    font-style: italic;
+    color: #ffffff;
+    margin-top: 2rem;
 }

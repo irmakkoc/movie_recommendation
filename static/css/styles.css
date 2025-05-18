@@ -220,14 +220,12 @@ body {
     text-align: center;
     color: #e3dcd2;
     font-size: 1.2rem;
-    margin: 30px 0;
     padding: 15px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     backdrop-filter: blur(5px);
     width: fit-content;
-    margin-left: auto;
-    margin-right: auto;
+    margin: 0 auto;
 }
 
 .input-section {
@@ -602,13 +600,40 @@ body {
 .recommendations .movie {
     height: 650px;
 }
+
+/* Adjust card height when user is not logged in */
+body:not(.user-logged-in) .recommendations .movie {
+    height: 500px;
+}
+
 .recommendations .movie-image {
     height: 68%;
     min-height: 260px;
     max-height: 400px;
 }
+
+/* Adjust image height when user is not logged in */
+body:not(.user-logged-in) .recommendations .movie-image {
+    height: 75%;
+    min-height: 300px;
+    max-height: 450px;
+}
+
 .recommendations .recommend-action-btn:last-child {
     margin-bottom: 32px;
+}
+
+/* Adjust spacing for non-logged in users */
+body:not(.user-logged-in) .movie-name {
+    margin-top: 1rem;
+}
+
+body:not(.user-logged-in) .movie-duration {
+    margin-top: 0.5rem;
+}
+
+body:not(.user-logged-in) .therapy-text {
+    margin-top: 0.5rem;
 }
 
 #movion-loading-overlay {
@@ -719,4 +744,49 @@ body {
 @keyframes fadeIn {
     from { opacity: 0; top: 0;}
     to { opacity: 1; top: 32px;}
+}
+
+.info-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 30px auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+}
+
+.spell-correction-info {
+    background-color: #e3dcd2;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    width: 100%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.correction-message {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #013328;
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+}
+
+.correction-details {
+    background-color: white;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 0.9rem;
+}
+
+.original-text {
+    color: #868e96;
+    margin-bottom: 5px;
+}
+
+.corrected-text {
+    color: #013328;
+    font-weight: 500;
 }
