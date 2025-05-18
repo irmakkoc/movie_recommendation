@@ -322,6 +322,89 @@
             applyClientSideViewFilter();
         }
         // ---- END OF MODIFIED/REPLACED SCRIPT ----
+
+        // --- Enhanced client-side filtering for Watched/Watch Later tabs ---
+        function getActiveTab() {
+            const activeBtn = document.querySelector('.movies-section .filters .filter-btn.active');
+            return activeBtn ? activeBtn.dataset.filter : 'all';
+        }
+        function getFilterValues() {
+            return {
+                search: document.getElementById('movie-search').value.trim().toLowerCase(),
+                genres: ($('#genre-filter').val() || []).map(g => g.toLowerCase()),
+                language: (document.getElementById('language-filter').value || '').toLowerCase(),
+                runtimeMin: parseInt(document.getElementById('runtime-min').value) || null,
+                runtimeMax: parseInt(document.getElementById('runtime-max').value) || null,
+                yearMin: parseInt(document.getElementById('year-min').value) || null,
+                yearMax: parseInt(document.getElementById('year-max').value) || null
+            };
+        }
+        function applyClientSideViewFilterEnhanced() {
+            const activeTab = getActiveTab();
+            const filters = getFilterValues();
+            document.querySelectorAll('.movies-grid .movie-card').forEach(card => {
+                const cardStatus = card.dataset.status;
+                const cardTitle = card.dataset.title;
+                const cardGenres = (card.dataset.genres || '').split(',').map(g => g.trim());
+                // Language, runtime, year extraction (if available)
+                const cardLanguage = (card.querySelector('.movie-info .genres .genre-tag') || {}).textContent || '';
+                const cardRuntime = parseInt((card.querySelector('.release-date:last-child') || {}).textContent) || 0;
+                const cardYear = parseInt((card.querySelector('.release-date:first-child') || {}).textContent) || 0;
+                let showCard = false;
+                // Tab filter
+                if (activeTab === 'all') showCard = true;
+                else if (activeTab === 'watched') showCard = (cardStatus === 'watched');
+                else if (activeTab === 'watchlater') showCard = (cardStatus === 'watchlater');
+                // Search filter
+                if (showCard && filters.search) {
+                    showCard = cardTitle.includes(filters.search);
+                }
+                // Genre filter
+                if (showCard && filters.genres.length > 0) {
+                    showCard = filters.genres.every(g => cardGenres.includes(g));
+                }
+                // Language filter
+                if (showCard && filters.language) {
+                    showCard = cardLanguage.toLowerCase().includes(filters.language);
+                }
+                // Runtime filter
+                if (showCard && filters.runtimeMin !== null) {
+                    showCard = cardRuntime >= filters.runtimeMin;
+                }
+                if (showCard && filters.runtimeMax !== null) {
+                    showCard = cardRuntime <= filters.runtimeMax;
+                }
+                // Year filter
+                if (showCard && filters.yearMin !== null) {
+                    showCard = cardYear >= filters.yearMin;
+                }
+                if (showCard && filters.yearMax !== null) {
+                    showCard = cardYear <= filters.yearMax;
+                }
+                card.style.display = showCard ? 'block' : 'none';
+            });
+        }
+        // Intercept filter/search form
+        document.querySelector('.advanced-filters').addEventListener('submit', function(e) {
+            if (getActiveTab() !== 'all') {
+                e.preventDefault();
+                applyClientSideViewFilterEnhanced();
+            }
+        });
+        // Intercept search bar
+        document.getElementById('search-btn').addEventListener('click', function(e) {
+            if (getActiveTab() !== 'all') {
+                e.preventDefault();
+                applyClientSideViewFilterEnhanced();
+            }
+        });
+        // Intercept genre filter button
+        document.getElementById('filter-btn').addEventListener('click', function(e) {
+            if (getActiveTab() !== 'all') {
+                e.preventDefault();
+                applyClientSideViewFilterEnhanced();
+            }
+        });
     </script>
     <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
 </body>
